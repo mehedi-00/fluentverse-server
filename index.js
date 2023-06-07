@@ -31,20 +31,26 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
-        const fluentDb = client.db('fluendDB');
-        const userCollections = fluentDb.collection('users');
+
+        const userCollection = client.db("flauentDb").collection('users');
 
         // user Api here
-        app.post('/user', async (req, res) => {
-            const userData = req.body;
+        app.get('/users', async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        });
 
-            const query = { email: userData.email };
-            const existingUser = await userCollections.findOne(query);
+
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const query = { email: user.email };
+            const existingUser = await userCollection.findOne(query);
             if (existingUser) {
                 return res.send({ message: 'User already exists' });
             }
 
-            const result = await userCollections.insertOne(userData);
+            const result = await userCollection.insertOne(user);
             res.send(result);
         });
 
