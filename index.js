@@ -52,10 +52,10 @@ async function run() {
         // jwt
         app.post('/jwt', (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.SESCRET_TOKEN, { expiresIn: 5 })
-      
-            res.send({ token })
-          })
+            const token = jwt.sign(user, process.env.SESCRET_TOKEN, { expiresIn: 20 });
+
+            res.send({ token });
+        });
 
         // user Api here
         app.get('/users', verifyJWT, async (req, res) => {
@@ -71,6 +71,12 @@ async function run() {
             res.send(result);
         });
 
+        app.get('/user/role/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await userCollection.findOne(query, { projection: { _id: 0, role: 1 } });
+            res.send(result);
+        });
 
         // make admin
         app.patch('/user/admin/:id', async (req, res) => {
