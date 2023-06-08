@@ -2,7 +2,8 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const morgan = require('morgan');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const jwt = require('jsonwebtoken');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 
@@ -14,7 +15,20 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 
-
+const verifyJWT = (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+        return res.status(401).send({ error: true, message: 'unauthorized access' });
+    }
+    const token = authorization.split(' ')[1];
+    jwt.verify(token, process.env.SESCRET_TOKEN, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ error: true, message: 'unauthorized access' });
+        }
+        req.decoded = decoded;
+        next();
+    });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.k8bloyi.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -34,12 +48,42 @@ async function run() {
 
         const userCollection = client.db("flauentDb").collection('users');
 
+
+        // jwt
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.SESCRET_TOKEN, { expiresIn: 5 })
+      
+            res.send({ token })
+          })
+
         // user Api here
-        app.get('/users', async (req, res) => {
+        app.get('/users', verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            if (!email) {
+                return res.send([]);
+            }
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ error: true, message: 'forbidden access' });
+            }
             const result = await userCollection.find().toArray();
             res.send(result);
         });
 
+
+        // make admin
+        app.patch('/user/admin/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    role: 'admin',
+                }
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
 
 
         app.post('/users', async (req, res) => {
