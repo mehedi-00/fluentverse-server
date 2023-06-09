@@ -108,7 +108,10 @@ async function run() {
 
         // class route
 
-
+        app.get('/allclasses',  async (req, res) => {
+            const result = await classColection.find().toArray();
+            res.send(result);
+        });
         app.get('/classes', verifyJWT, async (req, res) => {
             const userEmail = req.query.email;
             const query = { instructor_email: userEmail };
