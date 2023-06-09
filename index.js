@@ -47,12 +47,13 @@ async function run() {
         await client.connect();
 
         const userCollection = client.db("flauentDb").collection('users');
+        const classColection = client.db("flauentDb").collection('classes');
 
 
         // jwt
         app.post('/jwt', (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.SESCRET_TOKEN, { expiresIn: 20 });
+            const token = jwt.sign(user, process.env.SESCRET_TOKEN, { expiresIn: '2h' });
 
             res.send({ token });
         });
@@ -71,20 +72,21 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/user/role/:email', verifyJWT, async (req, res) => {
+        app.get('/user/role/:email',  async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
             const result = await userCollection.findOne(query, { projection: { _id: 0, role: 1 } });
             res.send(result);
         });
 
-        // make admin
-        app.patch('/user/admin/:id', async (req, res) => {
+        // make admin and  instructor
+        app.patch('/user/admin/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
+            const role = req.query.role;
             const filter = { _id: new ObjectId(id) };
             const updateDoc = {
                 $set: {
-                    role: 'admin',
+                    role: role,
                 }
             };
             const result = await userCollection.updateOne(filter, updateDoc);
@@ -103,6 +105,14 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result);
         });
+
+        // class route
+
+        app.post('/classes',verifyJWT,async(req,res)=>{
+            const data = req.body
+            const result = await classColection.insertOne(data);
+            res.send(result);
+        })
 
 
 
