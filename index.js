@@ -72,7 +72,7 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/user/role/:email',  async (req, res) => {
+        app.get('/user/role/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
             const result = await userCollection.findOne(query, { projection: { _id: 0, role: 1 } });
@@ -108,11 +108,19 @@ async function run() {
 
         // class route
 
-        app.post('/classes',verifyJWT,async(req,res)=>{
-            const data = req.body
+
+        app.get('/classes', verifyJWT, async (req, res) => {
+            const userEmail = req.query.email;
+            const query = { instructor_email: userEmail };
+            const result = await classColection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.post('/classes', verifyJWT, async (req, res) => {
+            const data = req.body;
             const result = await classColection.insertOne(data);
             res.send(result);
-        })
+        });
 
 
 
