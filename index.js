@@ -61,23 +61,23 @@ async function run() {
         // admin verify
         const verifyAdmin = async (req, res, next) => {
             const email = req.decoded.email;
-            const query = { email: email }
+            const query = { email: email };
             const user = await userCollection.findOne(query);
             if (user?.role !== 'admin') {
-              return res.status(403).send({ error: true, message: 'forbidden message' });
+                return res.status(403).send({ error: true, message: 'forbidden message' });
             }
             next();
-          }
+        };
         //   verify instructor
         const verifyInstructor = async (req, res, next) => {
             const email = req.decoded.email;
-            const query = { email: email }
+            const query = { email: email };
             const user = await userCollection.findOne(query);
             if (user?.role !== 'instructor') {
-              return res.status(403).send({ error: true, message: 'forbidden message' });
+                return res.status(403).send({ error: true, message: 'forbidden message' });
             }
             next();
-          }
+        };
 
         // user Api here
         app.get('/users', verifyJWT, async (req, res) => {
@@ -129,11 +129,11 @@ async function run() {
 
         // class route
 
-        app.get('/allclasses',  async (req, res) => {
+        app.get('/allclasses', async (req, res) => {
             const result = await classColection.find().toArray();
             res.send(result);
         });
-        app.get('/classes', verifyJWT, async (req, res) => {
+        app.get('/classes', verifyJWT, verifyInstructor, async (req, res) => {
             const userEmail = req.query.email;
             const query = { instructor_email: userEmail };
             const result = await classColection.find(query).toArray();
@@ -146,9 +146,21 @@ async function run() {
             res.send(result);
         });
 
+        app.patch('/class-status/:classId', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.classId;
+            const body = req.body;
+            console.log(body)
+            const query = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    status: body.status,
+                    feedback: body.feedback
+                }
+            };
+            const result = await classColection.updateOne(query, updateDoc);
+            res.send(result);
 
-
-
+        });
 
 
         // Send a ping to confirm a successful connection
