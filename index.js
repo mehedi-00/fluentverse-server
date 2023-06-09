@@ -58,6 +58,27 @@ async function run() {
             res.send({ token });
         });
 
+        // admin verify
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email }
+            const user = await userCollection.findOne(query);
+            if (user?.role !== 'admin') {
+              return res.status(403).send({ error: true, message: 'forbidden message' });
+            }
+            next();
+          }
+        //   verify instructor
+        const verifyInstructor = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email }
+            const user = await userCollection.findOne(query);
+            if (user?.role !== 'instructor') {
+              return res.status(403).send({ error: true, message: 'forbidden message' });
+            }
+            next();
+          }
+
         // user Api here
         app.get('/users', verifyJWT, async (req, res) => {
             const email = req.query.email;
