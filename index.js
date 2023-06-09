@@ -146,15 +146,27 @@ async function run() {
             res.send(result);
         });
 
-        app.patch('/class-status/:classId', verifyJWT, verifyAdmin, async (req, res) => {
+        app.patch('/class-status/deny/:classId', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.classId;
             const body = req.body;
             console.log(body)
             const query = { _id: new ObjectId(id) };
             const updateDoc = {
                 $set: {
-                    status: body.status,
+                    status: 'deny ',
                     feedback: body.feedback
+                }
+            };
+            const result = await classColection.updateOne(query, updateDoc);
+            res.send(result);
+
+        });
+        app.patch('/class-status/approve/:classId', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.classId;
+            const query = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    status: 'approve ',
                 }
             };
             const result = await classColection.updateOne(query, updateDoc);
