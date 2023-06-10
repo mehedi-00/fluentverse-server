@@ -187,7 +187,7 @@ async function run() {
         // student api here
         app.get('/selected-class', verifyJWT, async (req, res) => {
             const email = req.query.email;
-            const query = {email:email}
+            const query = { email: email };
             const result = await selectClassCollection.find(query).toArray();
             res.send(result);
         });
@@ -195,6 +195,12 @@ async function run() {
         app.post('/select-class', verifyJWT, async (req, res) => {
             const data = req.body;
             const result = await selectClassCollection.insertOne(data);
+            res.send(result);
+        });
+        app.delete('/select-class/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await selectClassCollection.deleteOne(query);
             res.send(result);
         });
 
