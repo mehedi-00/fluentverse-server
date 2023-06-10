@@ -139,6 +139,16 @@ async function run() {
             const result = await classColection.find(query).toArray();
             res.send(result);
         });
+        // all approved users
+        app.get('/approved-classes', async (req, res) => {
+            
+            const query = {
+                status: 'approve',
+            };
+            const result = await classColection.find(query).toArray();
+            res.send(result);
+
+        });
 
         app.post('/classes', verifyJWT, async (req, res) => {
             const data = req.body;
@@ -149,11 +159,11 @@ async function run() {
         app.patch('/class-status/deny/:classId', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.classId;
             const body = req.body;
-            console.log(body)
+            console.log(body);
             const query = { _id: new ObjectId(id) };
             const updateDoc = {
                 $set: {
-                    status: 'deny ',
+                    status: 'deny',
                     feedback: body.feedback
                 }
             };
@@ -166,7 +176,7 @@ async function run() {
             const query = { _id: new ObjectId(id) };
             const updateDoc = {
                 $set: {
-                    status: 'approve ',
+                    status: 'approve',
                 }
             };
             const result = await classColection.updateOne(query, updateDoc);
