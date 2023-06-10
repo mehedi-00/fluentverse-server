@@ -48,6 +48,7 @@ async function run() {
 
         const userCollection = client.db("flauentDb").collection('users');
         const classColection = client.db("flauentDb").collection('classes');
+        const selectClassCollection = client.db("flauentDb").collection('selectClasses');
 
 
         // jwt
@@ -141,7 +142,7 @@ async function run() {
         });
         // all approved users
         app.get('/approved-classes', async (req, res) => {
-            
+
             const query = {
                 status: 'approve',
             };
@@ -182,6 +183,12 @@ async function run() {
             const result = await classColection.updateOne(query, updateDoc);
             res.send(result);
 
+        });
+        // student api here
+        app.post('/select-class', verifyJWT, async (req, res) => {
+            const data = req.body;
+            const result = await selectClassCollection.insertOne(data);
+            res.send(result);
         });
 
 
