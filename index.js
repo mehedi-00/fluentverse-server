@@ -185,11 +185,19 @@ async function run() {
 
         });
         // student api here
+        app.get('/selected-class', verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            const query = {email:email}
+            const result = await selectClassCollection.find(query).toArray();
+            res.send(result);
+        });
+
         app.post('/select-class', verifyJWT, async (req, res) => {
             const data = req.body;
             const result = await selectClassCollection.insertOne(data);
             res.send(result);
         });
+
 
 
         // Send a ping to confirm a successful connection
