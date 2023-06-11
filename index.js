@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 
@@ -49,7 +50,7 @@ async function run() {
         const userCollection = client.db("flauentDb").collection('users');
         const classColection = client.db("flauentDb").collection('classes');
         const selectClassCollection = client.db("flauentDb").collection('selectClasses');
-
+        const paymentsCollection = client.db("flauentDb").collection('payments');
 
         // jwt
         app.post('/jwt', (req, res) => {
@@ -191,6 +192,12 @@ async function run() {
             const result = await selectClassCollection.find(query).toArray();
             res.send(result);
         });
+        app.get('/selected-class/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await selectClassCollection.findOne(query);
+            res.send(result);
+        });
 
         app.post('/select-class', verifyJWT, async (req, res) => {
             const data = req.body;
@@ -204,6 +211,41 @@ async function run() {
             res.send(result);
         });
 
+
+        // creat payment intent 
+        app.post("/create-payment-intent", async (req, res) => {
+            const { price } = req.body;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            });
+        });
+
+        app.post('/payments', verifyJWT, async (req, res) => {
+            const body = req.body;
+            const query = { _id: new ObjectId(body.select_class_id) };
+            const selete_select_class = await selectClassCollection.deleteOne(query);
+            delete body.select_class_id;
+            const classQuery = { _id: new ObjectId(body.class_id) };
+            const findClass = await classColection.findOne(classQuery);
+            const updateAvilableSeat = findClass.avilable_seats-1
+            const updateDoc = {
+                $set: {
+                    avilable_seats: updateAvilableSeat,
+                }
+            };
+            const updateClass = await classColection.updateOne(classQuery, updateDoc);
+            
+            const result = await paymentsCollection.insertOne(body);
+            res.send(result);
+
+        });
 
 
         // Send a ping to confirm a successful connection
