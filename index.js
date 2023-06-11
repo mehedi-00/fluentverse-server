@@ -198,6 +198,13 @@ async function run() {
             const result = await selectClassCollection.findOne(query);
             res.send(result);
         });
+        // my enrolled class
+        app.get('/enrolled', verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            const query = { student_email: email };
+            const result = await paymentsCollection.find(query).toArray();
+            res.send(result);
+        });
 
         app.post('/select-class', verifyJWT, async (req, res) => {
             const data = req.body;
@@ -213,7 +220,15 @@ async function run() {
 
 
         // creat payment intent 
-        app.post("/create-payment-intent", async (req, res) => {
+        app.get('/payment-history', verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                student_email: email
+            };
+            const result = await paymentsCollection.find(query).sort({ date: -1 }).toArray();
+            res.send(result);
+        });
+        app.post("/create-payment-intent", verifyJWT, async (req, res) => {
             const { price } = req.body;
             const amount = price * 100;
 
@@ -234,14 +249,15 @@ async function run() {
             delete body.select_class_id;
             const classQuery = { _id: new ObjectId(body.class_id) };
             const findClass = await classColection.findOne(classQuery);
-            const updateAvilableSeat = findClass.avilable_seats-1
+            const updateAvilableSeat = findClass.avilable_seats - 1;
             const updateDoc = {
                 $set: {
                     avilable_seats: updateAvilableSeat,
+                    total_enroled: ++findClass.total_enroled || 1,
                 }
             };
             const updateClass = await classColection.updateOne(classQuery, updateDoc);
-            
+
             const result = await paymentsCollection.insertOne(body);
             res.send(result);
 
