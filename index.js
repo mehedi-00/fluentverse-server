@@ -55,7 +55,7 @@ async function run() {
         // jwt
         app.post('/jwt', (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.SESCRET_TOKEN, { expiresIn: '2h' });
+            const token = jwt.sign(user, process.env.SESCRET_TOKEN, { expiresIn: '7d' });
 
             res.send({ token });
         });
@@ -128,6 +128,27 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result);
         });
+
+
+        // api for client side 
+        app.get('/instructors', async (req, res) => {
+
+            const result = await userCollection.find({ role: 'instructor' }).toArray();
+
+            res.send(result);
+
+        });
+        app.get('/popular-instructors', async (req, res) => {
+
+            const result = await userCollection.find({ role: 'instructor' }).limit(6).toArray();
+
+            res.send(result);
+
+        });
+        app.get('/popular-clsases',async(req,res)=>{
+            const result = await classColection.find({status:'approve'}).sort({total_enroled:-1}).toArray()
+            res.send(result);
+        })
 
         // class route
 
@@ -262,6 +283,9 @@ async function run() {
             res.send(result);
 
         });
+
+
+        
 
 
         // Send a ping to confirm a successful connection
